@@ -46,7 +46,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     Double servingRadiusInKms;
     if ((currentTime.isAfter(LocalTime.of(7,59)) && currentTime.isBefore(LocalTime.of(10, 1)))
             || (currentTime.isAfter(LocalTime.of(12,59))
-            && currentTime.isBefore(LocalTime.of(2, 1)))
+            && currentTime.isBefore(LocalTime.of(14, 1)))
             || (currentTime.isAfter(LocalTime.of(18,59)) 
             && currentTime.isBefore(LocalTime.of(21, 1)))) {
       servingRadiusInKms = peakHoursServingRadiusInKms;
