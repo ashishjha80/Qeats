@@ -61,10 +61,13 @@ public class RestaurantController {
     GetRestaurantsResponse getRestaurantsResponse;
 
     //CHECKSTYLE:OFF
+    long startTimeInMillis = System.currentTimeMillis();
     getRestaurantsResponse = restaurantService
         .findAllRestaurantsCloseBy(getRestaurantsRequest, LocalTime.now());
     log.info("getRestaurants returned {}", getRestaurantsResponse);
     //CHECKSTYLE:ON
+    long endTimeInMillis = System.currentTimeMillis();
+    System.out.println("Your service layer took :" + (endTimeInMillis - startTimeInMillis));
     List<Restaurant> res = getRestaurantsResponse.getRestaurants();
     for (Restaurant currentRes : res) {
       String plainText = Normalizer.normalize(currentRes.getName(), Normalizer.Form.NFD)

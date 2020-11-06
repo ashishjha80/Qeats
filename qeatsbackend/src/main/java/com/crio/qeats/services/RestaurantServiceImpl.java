@@ -53,9 +53,13 @@ public class RestaurantServiceImpl implements RestaurantService {
     } else {
       servingRadiusInKms = normalHoursServingRadiusInKms;
     }
+    long startTimeInMillis = System.currentTimeMillis();
+
     List<Restaurant> nearRestaurants = restaurantRepositoryService.findAllRestaurantsCloseBy(
             latitude, longitude, currentTime, servingRadiusInKms);
     log.info("findAllRestaurantsCloseBy returned with {}",nearRestaurants);
+    long endTimeInMillis = System.currentTimeMillis();
+    System.out.println("Your data layer took :" + (endTimeInMillis - startTimeInMillis));
     return new GetRestaurantsResponse(nearRestaurants);
   }
 
