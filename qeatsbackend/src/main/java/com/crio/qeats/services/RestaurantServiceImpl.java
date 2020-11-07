@@ -11,6 +11,10 @@ import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
 import com.crio.qeats.repositoryservices.RestaurantRepositoryService;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+import java.io.IOException;
 import java.time.LocalTime;
 //import java.util.ArrayList;
 //import java.util.HashMap;
@@ -33,12 +37,12 @@ public class RestaurantServiceImpl implements RestaurantService {
   @Autowired
   private RestaurantRepositoryService restaurantRepositoryService;
 
-
   // TODO: CRIO_TASK_MODULE_RESTAURANTSAPI - Implement findAllRestaurantsCloseby.
   // Check RestaurantService.java file for the interface contract.
   @Override
-  public GetRestaurantsResponse findAllRestaurantsCloseBy(
-      GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime) {
+  public GetRestaurantsResponse findAllRestaurantsCloseBy(GetRestaurantsRequest 
+      getRestaurantsRequest,
+      LocalTime currentTime) throws JsonParseException, JsonMappingException, IOException {
     
     log.info("findAllRestaurantsCloseBy called with {}",getRestaurantsRequest,currentTime);
     Double latitude = getRestaurantsRequest.getLatitude();

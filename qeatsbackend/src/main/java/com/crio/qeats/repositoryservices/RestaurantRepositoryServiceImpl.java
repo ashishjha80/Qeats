@@ -6,19 +6,26 @@
 
 package com.crio.qeats.repositoryservices;
 
-//import ch.hsr.geohash.GeoHash;
+import ch.hsr.geohash.GeoHash;
+import com.crio.qeats.configs.RedisConfiguration;
 import com.crio.qeats.dto.Restaurant;
 //import com.crio.qeats.globals.GlobalConstants;
 import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 //import com.crio.qeats.utils.GeoLocation;
 import com.crio.qeats.utils.GeoUtils;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 //import com.fasterxml.jackson.core.JsonProcessingException;
 //import com.fasterxml.jackson.core.type.TypeReference;
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 //import java.util.Arrays;
 //import java.util.HashSet;
 import java.util.List;
@@ -36,17 +43,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
+import redis.clients.jedis.Jedis;
+//import redis.clients.jedis.JedisPool;
 
 @Service
 public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryService {
 
-
-
-
-  /*@Autowired
-  private MongoTemplate mongoTemplate;*/
+  /*
+   * @Autowired private MongoTemplate mongoTemplate;
+   */
   @Autowired
   private RestaurantRepository restaurantRepository;
+
+  @Autowired
+  private RedisConfiguration redisConfiguration;
 
   @Autowired
   private Provider<ModelMapper> modelMapperProvider;
@@ -63,24 +73,54 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   // 1. Implement findAllRestaurantsCloseby.
   // 2. Remember to keep the precision of GeoHash in mind while using it as a key.
   // Check RestaurantRepositoryService.java file for the interface contract.
-  public List<Restaurant> findAllRestaurantsCloseBy(Double latitude,
-      Double longitude, LocalTime currentTime, Double servingRadiusInKms) {
-    
-    List<RestaurantEntity> allRestaurants = restaurantRepository.findAll();
+
+  // CHECKSTYLE:OFF
+  // CHECKSTYLE:ON
+
+  public List<Restaurant> findAllRestaurantsCloseBy(Double latitude, Double longitude, 
+      LocalTime currentTime,Double servingRadiusInKms) throws JsonParseException, 
+      JsonMappingException, IOException {
+
     List<Restaurant> restaurants = new ArrayList<>();
+    // TODO: CRIO_TASK_MODULE_REDIS
+    // We want to use cache to speed things up. Write methods that perform the same functionality,
+    // but using the cache if it is present and reachable.
+    // Remember, you must ensure that if cache is not present, the queries are directed at the
+    // database instead.
+
+
+    //CHECKSTYLE:OFF
+    //CHECKSTYLE:ON
+    List<RestaurantEntity> allRestaurants = null;
+    GeoHash geoHash = GeoHash.withCharacterPrecision(latitude, longitude, 7);
+    if (redisConfiguration.isCacheAvailable()) {
+      Jedis jedis = redisConfiguration.getJedisPool().getResource();
+      ObjectMapper objectMapper = new ObjectMapper();
+
+      if (jedis.get(geoHash.toBase32()) == null) {
+        allRestaurants = restaurantRepository.findAll();
+        jedis.set(geoHash.toBase32(),objectMapper.writeValueAsString(allRestaurants));
+      } else {
+        String res = jedis.get(geoHash.toBase32());
+        RestaurantEntity[] cachedRes = objectMapper.readValue(res, RestaurantEntity[].class);
+        allRestaurants = Arrays.asList(cachedRes);
+      }
+      
+    } else {
+      allRestaurants = restaurantRepository.findAll();
+      //redisConfiguration.initCache();
+    }
+
     ModelMapper modelMapper = modelMapperProvider.get();
     for (RestaurantEntity currentRes : allRestaurants) {
       if (isRestaurantCloseByAndOpen(currentRes, currentTime, latitude, longitude, 
               servingRadiusInKms)) {
-        
+      
         Restaurant res = modelMapper.map(currentRes, Restaurant.class);
         restaurants.add(res);
-      }
-      
+      }    
     }
-    
-    //CHECKSTYLE:OFF
-    //CHECKSTYLE:ON
+
     return restaurants;
   }
 
@@ -103,10 +143,9 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   private boolean isRestaurantCloseByAndOpen(RestaurantEntity restaurantEntity,
       LocalTime currentTime, Double latitude, Double longitude, Double servingRadiusInKms) {
     if (isOpenNow(currentTime, restaurantEntity)) {
-      Double dist = GeoUtils.findDistanceInKm(latitude, longitude,
-          restaurantEntity.getLatitude(), restaurantEntity.getLongitude());
-      
-      return dist < servingRadiusInKms;
+      return GeoUtils.findDistanceInKm(latitude, longitude,
+          restaurantEntity.getLatitude(), restaurantEntity.getLongitude())
+          < servingRadiusInKms;
     }
 
     return false;

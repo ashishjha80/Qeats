@@ -16,11 +16,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.crio.qeats.QEatsApplication;
+import com.crio.qeats.configs.RedisConfiguration;
 import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 import com.crio.qeats.utils.FixtureHelpers;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.LocalTime;
@@ -41,10 +44,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 //import redis.embedded.RedisServer;
 
-// TODO: CRIO_TASK_MODULE_NOSQL
-// Pass all the RestaurantRepositoryService test cases.
-// Make modifications to the tests if necessary.
-@SpringBootTest(classes = {QEatsApplication.class})
+@SpringBootTest(classes = { QEatsApplication.class })
 @DirtiesContext
 @ActiveProfiles("test")
 public class RestaurantRepositoryServiceTest {
@@ -57,19 +57,26 @@ public class RestaurantRepositoryServiceTest {
   private MongoTemplate mongoTemplate;
   @Autowired
   private ObjectMapper objectMapper;
-  /*@Autowired
-  private Provider<ModelMapper> modelMapperProvider;*/
+  /*
+   * @Autowired private Provider<ModelMapper> modelMapperProvider;
+   */
 
   @MockBean
   private RestaurantRepository restaurantRepository;
 
+  @Autowired
+  private RedisConfiguration redisConfiguration;
 
   @Value("${spring.redis.port}")
   private int redisPort;
 
   //private RedisServer server = null;
 
-
+  @BeforeEach
+  public void setupRedisServer() throws IOException {
+    System.out.println("Redis port = " + redisPort);
+    redisConfiguration.setRedisPort(redisPort);
+  }
 
   @BeforeEach
   void setup() throws IOException {
@@ -83,10 +90,12 @@ public class RestaurantRepositoryServiceTest {
   @AfterEach
   void teardown() {
     mongoTemplate.dropCollection("restaurants");
+    redisConfiguration.destroyCache();
   }
 
   @Test
-  void restaurantsCloseByAndOpenNow(@Autowired MongoTemplate mongoTemplate) {
+  void restaurantsCloseByAndOpenNow(@Autowired MongoTemplate mongoTemplate)
+      throws JsonParseException, JsonMappingException, IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -100,7 +109,8 @@ public class RestaurantRepositoryServiceTest {
   }
 
   @Test
-  void noRestaurantsNearBy(@Autowired MongoTemplate mongoTemplate) {
+  void noRestaurantsNearBy(@Autowired MongoTemplate mongoTemplate)
+      throws JsonParseException, JsonMappingException, IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -112,7 +122,8 @@ public class RestaurantRepositoryServiceTest {
   }
 
   @Test
-  void tooEarlyNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate) {
+  void tooEarlyNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate)
+      throws JsonParseException, JsonMappingException, IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -124,7 +135,8 @@ public class RestaurantRepositoryServiceTest {
   }
 
   @Test
-  void tooLateNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate) {
+  void tooLateNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate)
+      throws JsonParseException, JsonMappingException, IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 

@@ -19,7 +19,9 @@ import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
 import com.crio.qeats.repositoryservices.RestaurantRepositoryService;
 import com.crio.qeats.utils.FixtureHelpers;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.LocalTime;
@@ -43,7 +45,7 @@ import org.springframework.test.context.ActiveProfiles;
 // 1. Make modifications to the tests if necessary so that all test cases pass
 // 2. Test RestaurantService Api by mocking RestaurantRepositoryService.
 
-@SpringBootTest(classes = {QEatsApplication.class})
+@SpringBootTest(classes = { QEatsApplication.class })
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
 @DirtiesContext
 @ActiveProfiles("test")
@@ -63,7 +65,8 @@ class RestaurantServiceTest {
     objectMapper = new ObjectMapper();
   }
 
-  private String getServingRadius(List<Restaurant> restaurants, LocalTime timeOfService) {
+  private String getServingRadius(List<Restaurant> restaurants, LocalTime timeOfService)
+      throws JsonParseException, JsonMappingException, IOException {
     when(restaurantRepositoryServiceMock
         .findAllRestaurantsCloseBy(any(Double.class), any(Double.class), any(LocalTime.class),
             any(Double.class)))
