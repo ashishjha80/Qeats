@@ -9,8 +9,6 @@ package com.crio.qeats.services;
 
 import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import java.io.IOException;
 import java.time.LocalTime;
@@ -30,8 +28,7 @@ public interface RestaurantService {
    */
   GetRestaurantsResponse findAllRestaurantsCloseBy(
       GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime) 
-      throws JsonParseException, 
-      JsonMappingException, IOException;
+      throws IOException;
 
 
 }
