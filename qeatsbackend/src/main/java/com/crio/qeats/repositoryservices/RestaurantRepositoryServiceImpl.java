@@ -88,9 +88,10 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
 
     //CHECKSTYLE:OFF
     //CHECKSTYLE:ON
-    List<RestaurantEntity> allRestaurants = null;
-    GeoHash geoHash = GeoHash.withCharacterPrecision(latitude, longitude, 7);
+  
     try {
+      List<RestaurantEntity> allRestaurants = null;
+      GeoHash geoHash = GeoHash.withCharacterPrecision(latitude, longitude, 7);
       if (redisConfiguration.isCacheAvailable()) {
         Jedis jedis = redisConfiguration.getJedisPool().getResource();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -108,20 +109,22 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
         allRestaurants = restaurantRepository.findAll();
         
       }
+
+      ModelMapper modelMapper = modelMapperProvider.get();
+      for (RestaurantEntity currentRes : allRestaurants) {
+        if (isRestaurantCloseByAndOpen(currentRes, currentTime, latitude, longitude, 
+                servingRadiusInKms)) {
+        
+          Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+          restaurants.add(res);
+        }    
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
   
 
-    ModelMapper modelMapper = modelMapperProvider.get();
-    for (RestaurantEntity currentRes : allRestaurants) {
-      if (isRestaurantCloseByAndOpen(currentRes, currentTime, latitude, longitude, 
-              servingRadiusInKms)) {
-      
-        Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-        restaurants.add(res);
-      }    
-    }
+  
 
     return restaurants;
   }
