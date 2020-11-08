@@ -108,7 +108,7 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
       
     } else {
       allRestaurants = restaurantRepository.findAll();
-      //redisConfiguration.initCache();
+      
     }
 
     ModelMapper modelMapper = modelMapperProvider.get();

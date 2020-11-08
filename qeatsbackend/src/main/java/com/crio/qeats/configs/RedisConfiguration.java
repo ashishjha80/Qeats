@@ -89,7 +89,7 @@ public class RedisConfiguration {
   public void destroyCache() {
     try {
       jedisPool.getResource().flushAll();
-      jedisPool.destroy();
+      jedisPool.close();
     } catch (Exception e) {
       e.printStackTrace();
     }
