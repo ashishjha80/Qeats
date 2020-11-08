@@ -150,7 +150,8 @@ public class RestaurantRepositoryServiceTest {
 
 
   @Test
-  void restaurantsCloseByFromColdCache(@Autowired MongoTemplate mongoTemplate) throws IOException {
+  void restaurantsCloseByFromColdCache(@Autowired MongoTemplate mongoTemplate) throws 
+      JsonParseException, JsonMappingException, IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
