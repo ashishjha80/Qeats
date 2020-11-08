@@ -10,8 +10,6 @@ import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
 import com.crio.qeats.services.RestaurantService;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -52,7 +50,7 @@ public class RestaurantController {
   @GetMapping(RESTAURANT_API_ENDPOINT + RESTAURANTS_API)
   public ResponseEntity<GetRestaurantsResponse> getRestaurants(@Valid GetRestaurantsRequest 
       getRestaurantsRequest)
-      throws JsonParseException, JsonMappingException, IOException {
+      throws IOException {
     
     Double latitude = getRestaurantsRequest.getLatitude();
     Double longitude = getRestaurantsRequest.getLongitude();

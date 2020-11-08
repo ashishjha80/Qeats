@@ -14,8 +14,6 @@ import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 //import com.crio.qeats.utils.GeoLocation;
 import com.crio.qeats.utils.GeoUtils;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -78,8 +76,7 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   // CHECKSTYLE:ON
 
   public List<Restaurant> findAllRestaurantsCloseBy(Double latitude, Double longitude, 
-      LocalTime currentTime,Double servingRadiusInKms) throws JsonParseException, 
-      JsonMappingException, IOException {
+      LocalTime currentTime,Double servingRadiusInKms) throws IOException {
 
     List<Restaurant> restaurants = new ArrayList<>();
     // TODO: CRIO_TASK_MODULE_REDIS
@@ -93,23 +90,28 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
     //CHECKSTYLE:ON
     List<RestaurantEntity> allRestaurants = null;
     GeoHash geoHash = GeoHash.withCharacterPrecision(latitude, longitude, 7);
-    if (redisConfiguration.isCacheAvailable()) {
-      Jedis jedis = redisConfiguration.getJedisPool().getResource();
-      ObjectMapper objectMapper = new ObjectMapper();
-
-      if (jedis.get(geoHash.toBase32()) == null) {
-        allRestaurants = restaurantRepository.findAll();
-        jedis.set(geoHash.toBase32(),objectMapper.writeValueAsString(allRestaurants));
+    try {
+      if (redisConfiguration.isCacheAvailable()) {
+        Jedis jedis = redisConfiguration.getJedisPool().getResource();
+        ObjectMapper objectMapper = new ObjectMapper();
+  
+        if (jedis.get(geoHash.toBase32()) == null) {
+          allRestaurants = restaurantRepository.findAll();
+          jedis.set(geoHash.toBase32(),objectMapper.writeValueAsString(allRestaurants));
+        } else {
+          String res = jedis.get(geoHash.toBase32());
+          RestaurantEntity[] cachedRes = objectMapper.readValue(res, RestaurantEntity[].class);
+          allRestaurants = Arrays.asList(cachedRes);
+        }
+        
       } else {
-        String res = jedis.get(geoHash.toBase32());
-        RestaurantEntity[] cachedRes = objectMapper.readValue(res, RestaurantEntity[].class);
-        allRestaurants = Arrays.asList(cachedRes);
+        allRestaurants = restaurantRepository.findAll();
+        
       }
-      
-    } else {
-      allRestaurants = restaurantRepository.findAll();
-      
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  
 
     ModelMapper modelMapper = modelMapperProvider.get();
     for (RestaurantEntity currentRes : allRestaurants) {

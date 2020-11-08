@@ -13,9 +13,7 @@ import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 import com.crio.qeats.utils.FixtureHelpers;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.LocalTime;
@@ -69,7 +67,7 @@ class RestaurantRepositoryServiceCacheTest {
 
   @Test
   void restaurantsCloseByFromWarmCache(@Autowired MongoTemplate mongoTemplate) throws 
-      JsonParseException, JsonMappingException, IOException {
+      IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 

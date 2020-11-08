@@ -21,9 +21,7 @@ import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 import com.crio.qeats.utils.FixtureHelpers;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.LocalTime;
@@ -95,7 +93,7 @@ public class RestaurantRepositoryServiceTest {
 
   @Test
   void restaurantsCloseByAndOpenNow(@Autowired MongoTemplate mongoTemplate)
-      throws JsonParseException, JsonMappingException, IOException {
+      throws IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -110,7 +108,7 @@ public class RestaurantRepositoryServiceTest {
 
   @Test
   void noRestaurantsNearBy(@Autowired MongoTemplate mongoTemplate)
-      throws JsonParseException, JsonMappingException, IOException {
+      throws IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -123,7 +121,7 @@ public class RestaurantRepositoryServiceTest {
 
   @Test
   void tooEarlyNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate)
-      throws JsonParseException, JsonMappingException, IOException {
+      throws IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -136,7 +134,7 @@ public class RestaurantRepositoryServiceTest {
 
   @Test
   void tooLateNoRestaurantIsOpen(@Autowired MongoTemplate mongoTemplate)
-      throws JsonParseException, JsonMappingException, IOException {
+      throws IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
@@ -151,7 +149,7 @@ public class RestaurantRepositoryServiceTest {
 
   @Test
   void restaurantsCloseByFromColdCache(@Autowired MongoTemplate mongoTemplate) throws 
-      JsonParseException, JsonMappingException, IOException {
+      IOException {
     assertNotNull(mongoTemplate);
     assertNotNull(restaurantRepositoryService);
 
