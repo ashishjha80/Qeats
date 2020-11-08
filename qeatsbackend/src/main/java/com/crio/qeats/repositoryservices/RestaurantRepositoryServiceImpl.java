@@ -16,7 +16,6 @@ import com.crio.qeats.repositories.RestaurantRepository;
 import com.crio.qeats.utils.GeoUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 //import com.fasterxml.jackson.core.JsonProcessingException;
 //import com.fasterxml.jackson.core.type.TypeReference;
 //import com.fasterxml.jackson.databind.ObjectMapper;
@@ -76,7 +75,7 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   // CHECKSTYLE:ON
 
   public List<Restaurant> findAllRestaurantsCloseBy(Double latitude, Double longitude, 
-      LocalTime currentTime,Double servingRadiusInKms) throws IOException {
+      LocalTime currentTime,Double servingRadiusInKms) {
 
     List<Restaurant> restaurants = new ArrayList<>();
     // TODO: CRIO_TASK_MODULE_REDIS

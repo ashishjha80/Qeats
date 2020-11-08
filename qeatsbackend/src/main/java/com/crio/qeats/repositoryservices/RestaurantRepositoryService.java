@@ -8,7 +8,6 @@ package com.crio.qeats.repositoryservices;
 
 import com.crio.qeats.dto.Restaurant;
 
-import java.io.IOException;
 import java.time.LocalTime;
 import java.util.List;
 //import java.util.concurrent.Future;
@@ -28,7 +27,7 @@ public interface RestaurantRepositoryService {
    *     empty list if there is none
    */
   List<Restaurant> findAllRestaurantsCloseBy(Double latitude, Double longitude,
-      LocalTime currentTime, Double servingRadiusInKms) throws IOException;
+      LocalTime currentTime, Double servingRadiusInKms);
 
 }
 

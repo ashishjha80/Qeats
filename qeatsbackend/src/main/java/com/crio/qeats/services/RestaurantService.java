@@ -10,7 +10,6 @@ package com.crio.qeats.services;
 import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
 
-import java.io.IOException;
 import java.time.LocalTime;
 
 public interface RestaurantService {
@@ -27,8 +26,7 @@ public interface RestaurantService {
    *     empty list if none fits the criteria.
    */
   GetRestaurantsResponse findAllRestaurantsCloseBy(
-      GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime) 
-      throws IOException;
+      GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime);
 
 
 }

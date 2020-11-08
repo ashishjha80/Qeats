@@ -12,7 +12,6 @@ import com.crio.qeats.exchanges.GetRestaurantsRequest;
 import com.crio.qeats.exchanges.GetRestaurantsResponse;
 import com.crio.qeats.repositoryservices.RestaurantRepositoryService;
 
-import java.io.IOException;
 import java.time.LocalTime;
 //import java.util.ArrayList;
 //import java.util.HashMap;
@@ -39,8 +38,7 @@ public class RestaurantServiceImpl implements RestaurantService {
   // Check RestaurantService.java file for the interface contract.
   @Override
   public GetRestaurantsResponse findAllRestaurantsCloseBy(GetRestaurantsRequest 
-      getRestaurantsRequest,
-      LocalTime currentTime) throws IOException {
+      getRestaurantsRequest, LocalTime currentTime) {
     
     log.info("findAllRestaurantsCloseBy called with {}",getRestaurantsRequest,currentTime);
     Double latitude = getRestaurantsRequest.getLatitude();
