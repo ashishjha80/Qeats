@@ -9,7 +9,7 @@ package com.crio.qeats.repositoryservices;
 import ch.hsr.geohash.GeoHash;
 import com.crio.qeats.configs.RedisConfiguration;
 import com.crio.qeats.dto.Restaurant;
-//import com.crio.qeats.globals.GlobalConstants;
+import com.crio.qeats.globals.GlobalConstants;
 import com.crio.qeats.models.RestaurantEntity;
 import com.crio.qeats.repositories.RestaurantRepository;
 //import com.crio.qeats.utils.GeoLocation;
@@ -97,7 +97,9 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   
         if (jedis.get(geoHash.toBase32()) == null) {
           allRestaurants = restaurantRepository.findAll();
-          jedis.set(geoHash.toBase32(),objectMapper.writeValueAsString(allRestaurants));
+          jedis.setex(geoHash.toBase32(),
+              GlobalConstants.REDIS_ENTRY_EXPIRY_IN_SECONDS, 
+              objectMapper.writeValueAsString(allRestaurants));
         } else {
           String res = jedis.get(geoHash.toBase32());
           RestaurantEntity[] cachedRes = objectMapper.readValue(res, RestaurantEntity[].class);
