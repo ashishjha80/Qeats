@@ -62,13 +62,16 @@ public class RestaurantController {
 
     //CHECKSTYLE:OFF
     //long startTimeInMillis = System.currentTimeMillis();
-    getRestaurantsResponse = restaurantService
-        .findAllRestaurantsCloseBy(getRestaurantsRequest, LocalTime.now());
-    log.info("getRestaurants returned {}", getRestaurantsResponse);
+    
     if (getRestaurantsRequest.getSearchFor() != null) {
       getRestaurantsResponse = restaurantService
-      .findRestaurantsBySearchQuery(getRestaurantsRequest, LocalTime.now());
-      return ResponseEntity.ok().body(getRestaurantsResponse);
+        .findRestaurantsBySearchQuery(getRestaurantsRequest, LocalTime.now());
+      log.info("getRestaurants returned {}", getRestaurantsResponse);
+      //return ResponseEntity.ok().body(getRestaurantsResponse);
+    } else {
+      getRestaurantsResponse = restaurantService
+        .findAllRestaurantsCloseBy(getRestaurantsRequest, LocalTime.now());
+      log.info("getRestaurants returned {}", getRestaurantsResponse);
     }
     //CHECKSTYLE:ON
     //long endTimeInMillis = System.currentTimeMillis();

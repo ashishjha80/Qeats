@@ -40,9 +40,6 @@ public class RestaurantServiceImpl implements RestaurantService {
   public GetRestaurantsResponse findAllRestaurantsCloseBy(GetRestaurantsRequest 
       getRestaurantsRequest, LocalTime currentTime) {
     
-    if (getRestaurantsRequest.getSearchFor() != null) {
-      return findRestaurantsBySearchQuery(getRestaurantsRequest, currentTime);
-    }
     log.info("findAllRestaurantsCloseBy called with {}",getRestaurantsRequest,currentTime);
     Double latitude = getRestaurantsRequest.getLatitude();
     Double longitude = getRestaurantsRequest.getLongitude();
