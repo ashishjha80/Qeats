@@ -16,12 +16,12 @@ package com.crio.qeats.controller;
 import static com.crio.qeats.controller.RestaurantController.RESTAURANTS_API;
 import static com.crio.qeats.controller.RestaurantController.RESTAURANT_API_ENDPOINT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-//import static org.junit.jupiter.api.Assertions.assertNotNull;
-//import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 //import static org.mockito.Mockito.doThrow;
-//import static org.mockito.Mockito.times;
-//import static org.mockito.Mockito.verify;
-//import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 //import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,20 +30,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 //import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.crio.qeats.QEatsApplication;
-//import com.crio.qeats.exchanges.GetRestaurantsRequest;
-//import com.crio.qeats.exchanges.GetRestaurantsResponse;
+import com.crio.qeats.dto.Restaurant;
+import com.crio.qeats.exchanges.GetRestaurantsRequest;
+import com.crio.qeats.exchanges.GetRestaurantsResponse;
 import com.crio.qeats.services.RestaurantService;
-//import com.crio.qeats.utils.FixtureHelpers;
-//import com.fasterxml.jackson.core.type.TypeReference;
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import java.io.IOException;
+import com.crio.qeats.utils.FixtureHelpers;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.net.URI;
-//import java.time.LocalTime;
-//import java.util.List;
+import java.time.LocalTime;
+import java.util.List;
 //import java.util.NoSuchElementException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-//import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -80,8 +81,8 @@ public class RestaurantControllerTest {
   //private static final String POST_ORDER_API_URI = RESTAURANT_API_ENDPOINT + POST_ORDER_API;
   //private static final String LIST_ORDERS_API_URI = RESTAURANT_API_ENDPOINT + GET_ORDERS_API;
 
-  //private static final String FIXTURES = "fixtures/exchanges";
-  //private ObjectMapper objectMapper;
+  private static final String FIXTURES = "fixtures/exchanges";
+  private ObjectMapper objectMapper;
 
   private MockMvc mvc;
 
@@ -94,13 +95,96 @@ public class RestaurantControllerTest {
 
   @BeforeEach
   public void setup() {
-    //objectMapper = new ObjectMapper();
+    objectMapper = new ObjectMapper();
 
     MockitoAnnotations.initMocks(this);
 
     mvc = MockMvcBuilders.standaloneSetup(restaurantController).build();
   }
 
+  private GetRestaurantsResponse loadSampleResponseList() throws IOException {
+    String fixture =
+        FixtureHelpers.fixture(FIXTURES + "/initial_data_set_restaurants.json");
+
+    List<Restaurant> response = objectMapper
+            .readValue(fixture, new TypeReference<List<Restaurant>>() {
+            });
+    return new GetRestaurantsResponse(response);
+  }
+
+  @Test
+  public void correctQueryReturnsOkResponseAndListOfRestaurants() throws Exception {
+    GetRestaurantsResponse sampleResponse = loadSampleResponseList();
+    assertNotNull(sampleResponse);
+
+    when(restaurantService
+        .findAllRestaurantsCloseBy(any(GetRestaurantsRequest.class), any(LocalTime.class)))
+        .thenReturn(sampleResponse);
+
+    ArgumentCaptor<GetRestaurantsRequest> argumentCaptor = ArgumentCaptor
+        .forClass(GetRestaurantsRequest.class);
+
+    URI uri = UriComponentsBuilder
+        .fromPath(RESTAURANT_API_URI)
+        .queryParam("latitude", "20.21")
+        .queryParam("longitude", "30.31")
+        .build().toUri();
+
+    assertEquals(RESTAURANT_API_URI + "?latitude=20.21&longitude=30.31", uri.toString());
+
+    MockHttpServletResponse response = mvc.perform(
+        get(uri.toString()).accept(APPLICATION_JSON_UTF8)
+    ).andReturn().getResponse();
+
+    assertEquals(HttpStatus.OK.value(), response.getStatus());
+
+    verify(restaurantService, times(1))
+        .findAllRestaurantsCloseBy(argumentCaptor.capture(), any(LocalTime.class));
+
+    assertEquals("20.21", argumentCaptor.getValue().getLatitude().toString());
+
+    assertEquals("30.31", argumentCaptor.getValue().getLongitude().toString());
+
+  }
+
+  @Test
+  public void getRestaurantsBySearchStringAndLatLong() throws Exception {
+    GetRestaurantsResponse sampleResponse = loadSampleResponseList();
+    assertNotNull(sampleResponse);
+
+    when(restaurantService
+        .findAllRestaurantsCloseBy(any(GetRestaurantsRequest.class), any(LocalTime.class)))
+        .thenReturn(sampleResponse);
+
+    ArgumentCaptor<GetRestaurantsRequest> argumentCaptor = ArgumentCaptor
+        .forClass(GetRestaurantsRequest.class);
+
+    URI uri = UriComponentsBuilder
+        .fromPath(RESTAURANT_API_URI)
+        .queryParam("latitude", "20.21")
+        .queryParam("longitude", "30.31")
+        .queryParam("searchFor", "Briyani")
+        .build().toUri();
+
+    assertEquals(RESTAURANT_API_URI + "?latitude=20.21&longitude=30.31&searchFor=Briyani",
+        uri.toString());
+
+    MockHttpServletResponse response = mvc.perform(
+        get(uri.toString()).accept(APPLICATION_JSON_UTF8)
+    ).andReturn().getResponse();
+
+    assertEquals(HttpStatus.OK.value(), response.getStatus());
+
+    verify(restaurantService, times(1))
+        .findRestaurantsBySearchQuery(argumentCaptor.capture(), any(LocalTime.class));
+
+    assertEquals("20.21", argumentCaptor.getValue().getLatitude().toString());
+
+    assertEquals("30.31", argumentCaptor.getValue().getLongitude().toString());
+
+    assertEquals("Briyani", argumentCaptor.getValue().getSearchFor());
+
+  }
 
   @Test
   public void invalidLatitudeResultsInBadHttpRequest() throws Exception {

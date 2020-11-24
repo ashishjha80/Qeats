@@ -10,7 +10,11 @@ import ch.hsr.geohash.GeoHash;
 import com.crio.qeats.configs.RedisConfiguration;
 import com.crio.qeats.dto.Restaurant;
 import com.crio.qeats.globals.GlobalConstants;
+import com.crio.qeats.models.ItemEntity;
+import com.crio.qeats.models.MenuEntity;
 import com.crio.qeats.models.RestaurantEntity;
+import com.crio.qeats.repositories.ItemRepository;
+import com.crio.qeats.repositories.MenuRepository;
 import com.crio.qeats.repositories.RestaurantRepository;
 //import com.crio.qeats.utils.GeoLocation;
 import com.crio.qeats.utils.GeoUtils;
@@ -24,10 +28,10 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 //import java.util.Arrays;
-//import java.util.HashSet;
+import java.util.HashSet;
 import java.util.List;
-//import java.util.Optional;
-//import java.util.Set;
+import java.util.Optional;
+import java.util.Set;
 //import java.util.concurrent.Future;
 //import java.util.regex.Pattern;
 //import java.util.stream.Collectors;
@@ -53,7 +57,16 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   private RestaurantRepository restaurantRepository;
 
   @Autowired
+  private ItemRepository itemRepository;
+
+  @Autowired
+  private MenuRepository menuRepository;
+
+  @Autowired
   private RedisConfiguration redisConfiguration;
+
+  /*@Autowired
+  private MongoTemplate mongoTemplate;*/
 
   @Autowired
   private Provider<ModelMapper> modelMapperProvider;
@@ -130,17 +143,189 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
     return restaurants;
   }
 
-
-
-
-
-
-
-
-  // TODO: CRIO_TASK_MODULE_NOSQL
+  // TODO: CRIO_TASK_MODULE_RESTAURANTSEARCH
   // Objective:
-  // 1. Check if a restaurant is nearby and open. If so, it is a candidate to be returned.
-  // NOTE: How far exactly is "nearby"?
+  // Find restaurants whose names have an exact or partial match with the search query.
+  @Override
+  public List<Restaurant> findRestaurantsByName(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    List<Restaurant> restaurants = new ArrayList<>();
+    Set<Restaurant> setOfRes = new HashSet<>();    
+    Optional<List<RestaurantEntity>> exactNamesRes = 
+            restaurantRepository.findRestaurantsByNameExact(searchString);
+    ModelMapper modelMapper = modelMapperProvider.get();
+    if (exactNamesRes.isPresent()) {
+      List<RestaurantEntity> exactRes = exactNamesRes.get();
+      for (RestaurantEntity currentRes : exactRes) {
+        if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                latitude, longitude, servingRadiusInKms)) {
+          Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+          if (!setOfRes.contains(res)) {
+            restaurants.add(res);
+            setOfRes.add(res);
+          }
+        }
+      }
+    }
+    
+    Optional<List<RestaurantEntity>> partialNamesRes = 
+            restaurantRepository.findRestaurantsByNamePartial(searchString);
+    if (partialNamesRes.isPresent()) {
+      List<RestaurantEntity> partialRes = partialNamesRes.get();
+      for (RestaurantEntity currentRes : partialRes) {
+        if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                latitude, longitude, servingRadiusInKms)) {
+          Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+          if (!setOfRes.contains(res)) {
+            restaurants.add(res);
+            setOfRes.add(res);
+          }
+        }
+      }
+    }
+
+    return restaurants;
+  }
+
+
+  // TODO: CRIO_TASK_MODULE_RESTAURANTSEARCH
+  // Objective:
+  // Find restaurants whose attributes (cuisines) intersect with the search query.
+  @Override
+  public List<Restaurant> findRestaurantsByAttributes(
+      Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    
+    List<Restaurant> restaurants = new ArrayList<>();
+    Optional<List<RestaurantEntity>> attributeNamesRes = 
+            restaurantRepository.findRestaurantsByAttributes(searchString);
+    ModelMapper modelMapper = modelMapperProvider.get();
+    if (attributeNamesRes.isPresent()) {
+      List<RestaurantEntity> attributeRes = attributeNamesRes.get();
+      for (RestaurantEntity currentRes : attributeRes) {
+        if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                latitude, longitude, servingRadiusInKms)) {
+          Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+          restaurants.add(res);
+        }
+      }
+    }
+    return restaurants;
+  }
+
+
+
+  // TODO: CRIO_TASK_MODULE_RESTAURANTSEARCH
+  // Objective:
+  // Find restaurants which serve food items whose names form a complete or partial match
+  // with the search query.
+
+  @Override
+  public List<Restaurant> findRestaurantsByItemName(
+      Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    
+    List<Restaurant> restaurants = new ArrayList<>();
+    Set<Restaurant> setOfRes = new HashSet<>();    
+    Optional<List<ItemEntity>> exactNamesItemEntity = 
+            itemRepository.findItemsByNameExact(searchString);
+    ModelMapper modelMapper = modelMapperProvider.get();
+    if (exactNamesItemEntity.isPresent()) {
+      List<ItemEntity> exactItemEntity = exactNamesItemEntity.get();
+      List<String> itemIdList = new ArrayList<>();
+      for (ItemEntity currentItemEntity : exactItemEntity) {
+        itemIdList.add(currentItemEntity.getItemId());
+      }
+      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
+      if (menusForRes.isPresent()) {
+        List<MenuEntity> menus = menusForRes.get();
+        for (MenuEntity menu : menus) {
+          RestaurantEntity currentRes = 
+                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
+          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                  latitude, longitude, servingRadiusInKms)) {
+            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+            if (!setOfRes.contains(res)) {
+              restaurants.add(res);
+              setOfRes.add(res);
+            }
+          }
+        }
+      }
+    }
+    
+    Optional<List<ItemEntity>> partialNamesItemEntity = 
+            itemRepository.findItemsByNamePartial(searchString);
+    if (partialNamesItemEntity.isPresent()) {
+      List<ItemEntity> partialItemEntity = partialNamesItemEntity.get();
+      List<String> itemIdList = new ArrayList<>();
+      for (ItemEntity currentItemEntity : partialItemEntity) {
+        itemIdList.add(currentItemEntity.getItemId());
+      }
+      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
+      if (menusForRes.isPresent()) {
+        List<MenuEntity> menus = menusForRes.get();
+        for (MenuEntity menu : menus) {
+          RestaurantEntity currentRes = 
+                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
+          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                  latitude, longitude, servingRadiusInKms)) {
+            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+            if (!setOfRes.contains(res)) {
+              restaurants.add(res);
+              setOfRes.add(res);
+            }
+          }
+        }
+      }
+      
+    }
+
+    return restaurants;
+    
+  }
+
+  // TODO: CRIO_TASK_MODULE_RESTAURANTSEARCH
+  // Objective:
+  // Find restaurants which serve food items whose attributes intersect with the search query.
+  @Override
+  public List<Restaurant> findRestaurantsByItemAttributes(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+
+    List<Restaurant> restaurants = new ArrayList<>();
+    Set<Restaurant> setOfRes = new HashSet<>();    
+    Optional<List<ItemEntity>> attributeNamesItemEntity = 
+            itemRepository.findItemsByAttributes(searchString);
+    ModelMapper modelMapper = modelMapperProvider.get();
+    if (attributeNamesItemEntity.isPresent()) {
+      List<ItemEntity> attributesItemEntity = attributeNamesItemEntity.get();
+      List<String> itemIdList = new ArrayList<>();
+      for (ItemEntity currentItemEntity : attributesItemEntity) {
+        itemIdList.add(currentItemEntity.getItemId());
+      }
+      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
+      if (menusForRes.isPresent()) {
+        List<MenuEntity> menus = menusForRes.get();
+        for (MenuEntity menu : menus) {
+          RestaurantEntity currentRes = 
+                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
+          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
+                  latitude, longitude, servingRadiusInKms)) {
+            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
+            if (!setOfRes.contains(res)) {
+              restaurants.add(res);
+              setOfRes.add(res);
+            }
+          }
+        }
+      }
+    }
+    return restaurants;
+  }
+
+
+
+
 
   /**
    * Utility method to check if a restaurant is within the serving radius at a given time.

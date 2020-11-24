@@ -61,13 +61,18 @@ public class RestaurantController {
     GetRestaurantsResponse getRestaurantsResponse;
 
     //CHECKSTYLE:OFF
-    long startTimeInMillis = System.currentTimeMillis();
+    //long startTimeInMillis = System.currentTimeMillis();
     getRestaurantsResponse = restaurantService
         .findAllRestaurantsCloseBy(getRestaurantsRequest, LocalTime.now());
     log.info("getRestaurants returned {}", getRestaurantsResponse);
+    if (getRestaurantsRequest.getSearchFor() != null) {
+      getRestaurantsResponse = restaurantService
+      .findRestaurantsBySearchQuery(getRestaurantsRequest, LocalTime.now());
+      return ResponseEntity.ok().body(getRestaurantsResponse);
+    }
     //CHECKSTYLE:ON
-    long endTimeInMillis = System.currentTimeMillis();
-    System.out.println("Your service layer took :" + (endTimeInMillis - startTimeInMillis));
+    //long endTimeInMillis = System.currentTimeMillis();
+    //System.out.println("Your service layer took :" + (endTimeInMillis - startTimeInMillis));
     List<Restaurant> res = getRestaurantsResponse.getRestaurants();
     for (Restaurant currentRes : res) {
       String plainText = Normalizer.normalize(currentRes.getName(), Normalizer.Form.NFD)

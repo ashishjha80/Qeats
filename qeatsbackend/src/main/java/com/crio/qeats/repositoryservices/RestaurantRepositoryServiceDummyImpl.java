@@ -49,5 +49,27 @@ public class RestaurantRepositoryServiceDummyImpl implements RestaurantRepositor
 
 
 
+  public List<Restaurant> findRestaurantsByName(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+  public List<Restaurant> findRestaurantsByAttributes(
+      Double latitude, Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+  public List<Restaurant> findRestaurantsByItemName(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+  public List<Restaurant> findRestaurantsByItemAttributes(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+
 }
 
