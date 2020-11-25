@@ -80,7 +80,8 @@ public class RestaurantServiceImpl implements RestaurantService {
   @Override
   public GetRestaurantsResponse findRestaurantsBySearchQuery(
       GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime) {
-    List<Restaurant> restaurants = new ArrayList<>();   
+    List<Restaurant> restaurants = new ArrayList<>(); 
+    System.out.println("called");  
     if (getRestaurantsRequest.getSearchFor().length() == 0) {
       return new GetRestaurantsResponse(restaurants);
     }
@@ -97,55 +98,56 @@ public class RestaurantServiceImpl implements RestaurantService {
     } else {
       servingRadiusInKms = normalHoursServingRadiusInKms;
     }
-    Set<Restaurant> setOfRes =  new HashSet<>();
+    Set<String> setOfRes =  new HashSet<>();
     //ArrayList<ArrayList<Restaurant>> allRes = new ArrayList<ArrayList<Restaurant>>();
     List<Restaurant> resByName = restaurantRepositoryService
             .findRestaurantsByName(latitude, longitude, searchString,
             currentTime, servingRadiusInKms);
     for (Restaurant res : resByName) {
-      if (!setOfRes.contains(res)) {
+      if (!setOfRes.contains(res.getRestaurantId())) {
         restaurants.add(res);
-        setOfRes.add(res);
+        setOfRes.add(res.getRestaurantId());
       }
         
     }
+    System.out.println("first");
     //allRes.add((ArrayList<Restaurant>) resByName);
     List<Restaurant> resByResAttribute = restaurantRepositoryService
             .findRestaurantsByAttributes(latitude, longitude, searchString,
             currentTime, servingRadiusInKms);
     for (Restaurant res : resByResAttribute) {
-      if (!setOfRes.contains(res)) {
+      if (!setOfRes.contains(res.getRestaurantId())) {
         restaurants.add(res);
-        setOfRes.add(res);
+        setOfRes.add(res.getRestaurantId());
       }
         
     }
+    System.out.println("second");
     //allRes.add((ArrayList<Restaurant>) resByResAttribute);
     List<Restaurant> resByItemName = restaurantRepositoryService
             .findRestaurantsByItemName(latitude, longitude, searchString,
             currentTime, servingRadiusInKms);
     for (Restaurant res : resByItemName) {
-      if (!setOfRes.contains(res)) {
+      if (!setOfRes.contains(res.getRestaurantId())) {
         restaurants.add(res);
-        setOfRes.add(res);
+        setOfRes.add(res.getRestaurantId());
       }
         
     }
+    System.out.println("third");
     //allRes.add((ArrayList<Restaurant>) resByItemName);
     List<Restaurant> resByItemAttribute = restaurantRepositoryService
             .findRestaurantsByItemAttributes(latitude, longitude, searchString,
             currentTime, servingRadiusInKms);
     //allRes.add((ArrayList<Restaurant>) resByItemAttribute);
-    
     for (Restaurant res : resByItemAttribute) {
-      if (!setOfRes.contains(res)) {
+      if (!setOfRes.contains(res.getRestaurantId())) {
         restaurants.add(res);
-        setOfRes.add(res);
+        setOfRes.add(res.getRestaurantId());
       }
         
     }
-    
-    
+    System.out.println("fourth");
     return new GetRestaurantsResponse(restaurants);
   }
 

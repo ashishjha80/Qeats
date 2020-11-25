@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 //import java.util.concurrent.Future;
 //import java.util.regex.Pattern;
 //import java.util.stream.Collectors;
@@ -121,7 +123,6 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
         
       } else {
         allRestaurants = restaurantRepository.findAll();
-        
       }
 
       ModelMapper modelMapper = modelMapperProvider.get();
@@ -150,7 +151,7 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   public List<Restaurant> findRestaurantsByName(Double latitude, Double longitude,
       String searchString, LocalTime currentTime, Double servingRadiusInKms) {
     List<Restaurant> restaurants = new ArrayList<>();
-    Set<Restaurant> setOfRes = new HashSet<>();    
+    Set<String> setOfRes = new HashSet<>();    
     Optional<List<RestaurantEntity>> exactNamesRes = 
             restaurantRepository.findRestaurantsByNameExact(searchString);
     ModelMapper modelMapper = modelMapperProvider.get();
@@ -160,9 +161,9 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
         if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
                 latitude, longitude, servingRadiusInKms)) {
           Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-          if (!setOfRes.contains(res)) {
+          if (!setOfRes.contains(res.getRestaurantId())) {
             restaurants.add(res);
-            setOfRes.add(res);
+            setOfRes.add(res.getRestaurantId());
           }
         }
       }
@@ -176,9 +177,9 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
         if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
                 latitude, longitude, servingRadiusInKms)) {
           Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-          if (!setOfRes.contains(res)) {
+          if (!setOfRes.contains(res.getRestaurantId())) {
             restaurants.add(res);
-            setOfRes.add(res);
+            setOfRes.add(res.getRestaurantId());
           }
         }
       }
@@ -213,7 +214,49 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
     return restaurants;
   }
 
+  private List<Restaurant> getRestaurantListServingItems(Double latitude, Double longitude,
+      LocalTime currentTime, Double servingRadiusInKms, List<ItemEntity> itemEntityList) {
+    List<String> itemIdList = itemEntityList
+        .stream()
+        .map(ItemEntity::getItemId)
+        .collect(Collectors.toList());
 
+    Optional<List<MenuEntity>> optionalMenuEntityList
+        = menuRepository.findMenusByItemsItemIdIn(itemIdList);
+    Optional<List<RestaurantEntity>> optionalRestaurantEntityList = Optional.empty();
+
+    if (optionalMenuEntityList.isPresent()) {
+      List<MenuEntity> menuEntityList = optionalMenuEntityList.get();
+      List<String> restaurantIdList = menuEntityList
+          .stream()
+          .map(MenuEntity::getRestaurantId)
+          .collect(Collectors.toList());
+      optionalRestaurantEntityList = restaurantRepository
+          .findRestaurantsByRestaurantIdIn(restaurantIdList);
+    }
+
+    List<Restaurant> restaurantList = new ArrayList<>();
+    ModelMapper modelMapper = modelMapperProvider.get();
+    if (optionalRestaurantEntityList.isPresent()) {
+      List<RestaurantEntity> restaurantEntityList = optionalRestaurantEntityList.get();
+
+      List<RestaurantEntity> restaurantEntitiesFiltered = new ArrayList<>();
+
+      for (RestaurantEntity restaurantEntity : restaurantEntityList) {
+        if (isRestaurantCloseByAndOpen(restaurantEntity, currentTime, latitude, longitude,
+            servingRadiusInKms)) {
+          restaurantEntitiesFiltered.add(restaurantEntity);
+        }
+      }
+
+      restaurantList = restaurantEntitiesFiltered
+          .stream()
+          .map(restaurantEntity -> modelMapper.map(restaurantEntity, Restaurant.class))
+          .collect(Collectors.toList());
+    }
+
+    return restaurantList;
+  }
 
   // TODO: CRIO_TASK_MODULE_RESTAURANTSEARCH
   // Objective:
@@ -224,64 +267,19 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   public List<Restaurant> findRestaurantsByItemName(
       Double latitude, Double longitude,
       String searchString, LocalTime currentTime, Double servingRadiusInKms) {
-    
-    List<Restaurant> restaurants = new ArrayList<>();
-    Set<Restaurant> setOfRes = new HashSet<>();    
+        
     Optional<List<ItemEntity>> exactNamesItemEntity = 
             itemRepository.findItemsByNameExact(searchString);
-    ModelMapper modelMapper = modelMapperProvider.get();
-    if (exactNamesItemEntity.isPresent()) {
-      List<ItemEntity> exactItemEntity = exactNamesItemEntity.get();
-      List<String> itemIdList = new ArrayList<>();
-      for (ItemEntity currentItemEntity : exactItemEntity) {
-        itemIdList.add(currentItemEntity.getItemId());
-      }
-      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
-      if (menusForRes.isPresent()) {
-        List<MenuEntity> menus = menusForRes.get();
-        for (MenuEntity menu : menus) {
-          RestaurantEntity currentRes = 
-                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
-          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
-                  latitude, longitude, servingRadiusInKms)) {
-            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-            if (!setOfRes.contains(res)) {
-              restaurants.add(res);
-              setOfRes.add(res);
-            }
-          }
-        }
-      }
-    }
     
     Optional<List<ItemEntity>> partialNamesItemEntity = 
             itemRepository.findItemsByNamePartial(searchString);
-    if (partialNamesItemEntity.isPresent()) {
-      List<ItemEntity> partialItemEntity = partialNamesItemEntity.get();
-      List<String> itemIdList = new ArrayList<>();
-      for (ItemEntity currentItemEntity : partialItemEntity) {
-        itemIdList.add(currentItemEntity.getItemId());
-      }
-      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
-      if (menusForRes.isPresent()) {
-        List<MenuEntity> menus = menusForRes.get();
-        for (MenuEntity menu : menus) {
-          RestaurantEntity currentRes = 
-                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
-          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
-                  latitude, longitude, servingRadiusInKms)) {
-            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-            if (!setOfRes.contains(res)) {
-              restaurants.add(res);
-              setOfRes.add(res);
-            }
-          }
-        }
-      }
-      
-    }
+    
+    List<ItemEntity> itemEntityList = exactNamesItemEntity.orElseGet(ArrayList::new);
+    List<ItemEntity> inexactItemEntityList = partialNamesItemEntity.orElseGet(ArrayList::new);
+    itemEntityList.addAll(inexactItemEntityList);
 
-    return restaurants;
+    return getRestaurantListServingItems(latitude, longitude, currentTime, servingRadiusInKms,
+        itemEntityList);
     
   }
 
@@ -291,36 +289,13 @@ public class RestaurantRepositoryServiceImpl implements RestaurantRepositoryServ
   @Override
   public List<Restaurant> findRestaurantsByItemAttributes(Double latitude, Double longitude,
       String searchString, LocalTime currentTime, Double servingRadiusInKms) {
-
-    List<Restaurant> restaurants = new ArrayList<>();
-    Set<Restaurant> setOfRes = new HashSet<>();    
+    
     Optional<List<ItemEntity>> attributeNamesItemEntity = 
             itemRepository.findItemsByAttributes(searchString);
-    ModelMapper modelMapper = modelMapperProvider.get();
-    if (attributeNamesItemEntity.isPresent()) {
-      List<ItemEntity> attributesItemEntity = attributeNamesItemEntity.get();
-      List<String> itemIdList = new ArrayList<>();
-      for (ItemEntity currentItemEntity : attributesItemEntity) {
-        itemIdList.add(currentItemEntity.getItemId());
-      }
-      Optional<List<MenuEntity>> menusForRes = menuRepository.findMenusByItemsItemIdIn(itemIdList);
-      if (menusForRes.isPresent()) {
-        List<MenuEntity> menus = menusForRes.get();
-        for (MenuEntity menu : menus) {
-          RestaurantEntity currentRes = 
-                  restaurantRepository.findByRestaurantId(menu.getRestaurantId());
-          if (isRestaurantCloseByAndOpen(currentRes, currentTime, 
-                  latitude, longitude, servingRadiusInKms)) {
-            Restaurant res = modelMapper.map(currentRes, Restaurant.class);
-            if (!setOfRes.contains(res)) {
-              restaurants.add(res);
-              setOfRes.add(res);
-            }
-          }
-        }
-      }
-    }
-    return restaurants;
+    
+    List<ItemEntity> itemEntityList = attributeNamesItemEntity.orElseGet(ArrayList::new);
+    return getRestaurantListServingItems(latitude, longitude, currentTime, servingRadiusInKms,
+        itemEntityList);
   }
 
 

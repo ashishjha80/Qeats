@@ -67,22 +67,26 @@ public class RestaurantController {
       getRestaurantsResponse = restaurantService
         .findRestaurantsBySearchQuery(getRestaurantsRequest, LocalTime.now());
       log.info("getRestaurants returned {}", getRestaurantsResponse);
-      //return ResponseEntity.ok().body(getRestaurantsResponse);
+      
     } else {
       getRestaurantsResponse = restaurantService
         .findAllRestaurantsCloseBy(getRestaurantsRequest, LocalTime.now());
       log.info("getRestaurants returned {}", getRestaurantsResponse);
     }
+    
+    
     //CHECKSTYLE:ON
     //long endTimeInMillis = System.currentTimeMillis();
     //System.out.println("Your service layer took :" + (endTimeInMillis - startTimeInMillis));
-    List<Restaurant> res = getRestaurantsResponse.getRestaurants();
-    for (Restaurant currentRes : res) {
-      String plainText = Normalizer.normalize(currentRes.getName(), Normalizer.Form.NFD)
-              .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-      currentRes.setName(plainText);
+    if (getRestaurantsResponse != null) {
+      List<Restaurant> res = getRestaurantsResponse.getRestaurants();
+      for (Restaurant currentRes : res) {
+        String plainText = Normalizer.normalize(currentRes.getName(), Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        currentRes.setName(plainText);
+      }
+      getRestaurantsResponse.setRestaurants(res);
     }
-    getRestaurantsResponse.setRestaurants(res);
     return ResponseEntity.ok().body(getRestaurantsResponse);
   }
 
