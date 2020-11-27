@@ -20,7 +20,7 @@ import java.util.List;
 //import java.util.Map;
 import java.util.Set;
 //import java.util.concurrent.ExecutionException;
-//import java.util.concurrent.Future;
+import java.util.concurrent.Future;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -151,5 +151,73 @@ public class RestaurantServiceImpl implements RestaurantService {
     return new GetRestaurantsResponse(restaurants);
   }
 
+  // TODO: CRIO_TASK_MODULE_MULTITHREADING
+  // Implement multi-threaded version of RestaurantSearch.
+  // Implement variant of findRestaurantsBySearchQuery which is at least 1.5x time faster than
+  // findRestaurantsBySearchQuery.
+  @Override
+  public GetRestaurantsResponse findRestaurantsBySearchQueryMt(
+      GetRestaurantsRequest getRestaurantsRequest, LocalTime currentTime) {
+
+    List<Restaurant> restaurants = new ArrayList<>(); 
+    System.out.println("called");  
+    if (getRestaurantsRequest.getSearchFor().length() == 0) {
+      return new GetRestaurantsResponse(restaurants);
+    }
+    Double latitude = getRestaurantsRequest.getLatitude();
+    Double longitude = getRestaurantsRequest.getLongitude();
+    String searchString = getRestaurantsRequest.getSearchFor();
+    Double servingRadiusInKms;
+    if ((currentTime.isAfter(LocalTime.of(7,59)) && currentTime.isBefore(LocalTime.of(10, 1)))
+            || (currentTime.isAfter(LocalTime.of(12,59))
+            && currentTime.isBefore(LocalTime.of(14, 1)))
+            || (currentTime.isAfter(LocalTime.of(18,59)) 
+            && currentTime.isBefore(LocalTime.of(21, 1)))) {
+      servingRadiusInKms = peakHoursServingRadiusInKms;
+    } else {
+      servingRadiusInKms = normalHoursServingRadiusInKms;
+    }
+    try {
+      Future<List<Restaurant>> futureResByName = restaurantRepositoryService
+            .findRestaurantsByNameMt(latitude, longitude, searchString,
+            currentTime, servingRadiusInKms);
+  
+      Future<List<Restaurant>> futureResByResAttribute = restaurantRepositoryService
+              .findRestaurantsByAttributesMt(latitude, longitude, searchString,
+              currentTime, servingRadiusInKms);
+
+      Future<List<Restaurant>> futureResByItemName = restaurantRepositoryService
+              .findRestaurantsByItemNameMt(latitude, longitude, searchString,
+              currentTime, servingRadiusInKms);
+
+      Future<List<Restaurant>> futureResByItemAttribute = restaurantRepositoryService
+              .findRestaurantsByItemAttributesMt(latitude, longitude, searchString,
+              currentTime, servingRadiusInKms);
+      //allRes.add((ArrayList<Restaurant>) resByItemAttribute);
+      List<Restaurant> resByName = futureResByName.get();
+      List<Restaurant> resByResAttribute = futureResByResAttribute.get();
+      List<Restaurant> resByItemName = futureResByItemName.get();
+      List<Restaurant> resByItemAttribute = futureResByItemAttribute.get();
+      Set<String> setOfRes =  new HashSet<>();
+      List<List<Restaurant>> listOfRestaurantLists = new ArrayList<>();
+      listOfRestaurantLists.add(resByName);
+      listOfRestaurantLists.add(resByResAttribute);
+      listOfRestaurantLists.add(resByItemName);
+      listOfRestaurantLists.add(resByItemAttribute);
+      for (List<Restaurant> restoList : listOfRestaurantLists) {
+        for (Restaurant restaurant : restoList) {
+          if (!setOfRes.contains(restaurant.getRestaurantId())) {
+            restaurants.add(restaurant);
+            setOfRes.add(restaurant.getRestaurantId());
+          }
+        }
+      }
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return new GetRestaurantsResponse(restaurants);
+  }
 }
 

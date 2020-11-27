@@ -10,8 +10,8 @@ import com.crio.qeats.dto.Restaurant;
 
 import java.time.LocalTime;
 import java.util.List;
-//import java.util.concurrent.Future;
-//import org.springframework.scheduling.annotation.Async;
+import java.util.concurrent.Future;
+import org.springframework.scheduling.annotation.Async;
 
 public interface RestaurantRepositoryService {
 
@@ -64,6 +64,46 @@ public interface RestaurantRepositoryService {
    * @return list of restaurants
    */
   List<Restaurant> findRestaurantsByItemAttributes(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms);
+
+  /**
+   * Get the list of open restaurants within the specified serving radius.
+   *   - Ensure the restaurant is open currently.
+   * @param searchString Query string for restaurants
+   * @return list of restaurants
+   */
+  @Async
+  Future<List<Restaurant>> findRestaurantsByNameMt(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms);
+
+  /**
+   * Get the list of open restaurants within the specified serving radius.
+   * @param searchString Query string for item attributes
+   * @return list of restaurants
+   */
+  @Async
+  Future<List<Restaurant>> findRestaurantsByAttributesMt(
+      Double latitude, Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms);
+
+  /**
+   * Get the list of open restaurants within the specified serving radius which service item
+   * name in search string.
+   * @param searchString The food items to search for
+   * @return list of restaurants
+   */
+  @Async
+  Future<List<Restaurant>> findRestaurantsByItemNameMt(Double latitude, Double longitude,
+      String searchString, LocalTime currentTime, Double servingRadiusInKms);
+
+  /**
+   * Get the list of open restaurants within the specified serving radius which have items of
+   * specified attributes in search string.
+   * @param searchString The item attributes to search for
+   * @return list of restaurants
+   */
+  @Async
+  Future<List<Restaurant>> findRestaurantsByItemAttributesMt(Double latitude, Double longitude,
       String searchString, LocalTime currentTime, Double servingRadiusInKms);
 
 }

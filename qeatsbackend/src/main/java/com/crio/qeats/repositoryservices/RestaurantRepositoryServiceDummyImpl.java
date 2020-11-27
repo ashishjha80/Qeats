@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 //import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 //import org.springframework.scheduling.annotation.Async;
@@ -19,21 +20,23 @@ public class RestaurantRepositoryServiceDummyImpl implements RestaurantRepositor
   private ObjectMapper objectMapper = new ObjectMapper();
 
   private List<Restaurant> loadRestaurantsDuringNormalHours() throws IOException {
-    String fixture =
-        FixtureHelpers.fixture(FIXTURES + "/normal_hours_list_of_restaurants.json");
+    String fixture = FixtureHelpers.fixture(FIXTURES + "/normal_hours_list_of_restaurants.json");
 
     return objectMapper.readValue(fixture, new TypeReference<List<Restaurant>>() {
     });
   }
 
   // TODO: CRIO_TASK_MODULE_RESTAURANTSAPI - Use this dummy implementation.
-  // This function returns a list of restaurants in any lat/long of your choice randomly.
+  // This function returns a list of restaurants in any lat/long of your choice
+  // randomly.
   // It will load some dummy restaurants and change their latitude/longitude near
-  // the lat/long you pass. In the next module, once you start using mongodb, you will not use
+  // the lat/long you pass. In the next module, once you start using mongodb, you
+  // will not use
   // it anymore.
   @Override
-  public List<Restaurant> findAllRestaurantsCloseBy(Double latitude, Double longitude,
-      LocalTime currentTime, Double servingRadiusInKms) {
+  public List<Restaurant> findAllRestaurantsCloseBy(Double latitude,
+      Double longitude, LocalTime currentTime,
+      Double servingRadiusInKms) {
     List<Restaurant> restaurantList = new ArrayList<>();
     try {
       restaurantList = loadRestaurantsDuringNormalHours();
@@ -47,26 +50,59 @@ public class RestaurantRepositoryServiceDummyImpl implements RestaurantRepositor
     return restaurantList;
   }
 
-
-
-  public List<Restaurant> findRestaurantsByName(Double latitude, Double longitude,
-      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
-    return null;
-  }
-
-  public List<Restaurant> findRestaurantsByAttributes(
-      Double latitude, Double longitude, String searchString,
+  public List<Restaurant> findRestaurantsByName(Double latitude, 
+      Double longitude, String searchString,
       LocalTime currentTime, Double servingRadiusInKms) {
     return null;
   }
 
-  public List<Restaurant> findRestaurantsByItemName(Double latitude, Double longitude,
-      String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+  public List<Restaurant> findRestaurantsByAttributes(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
     return null;
   }
 
-  public List<Restaurant> findRestaurantsByItemAttributes(Double latitude, Double longitude,
+  public List<Restaurant> findRestaurantsByItemName(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+  public List<Restaurant> findRestaurantsByItemAttributes(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    return null;
+  }
+
+  @Override
+  public Future<List<Restaurant>> findRestaurantsByNameMt(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Future<List<Restaurant>> findRestaurantsByAttributesMt(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Future<List<Restaurant>> findRestaurantsByItemNameMt(Double latitude, 
+      Double longitude, String searchString,
+      LocalTime currentTime, Double servingRadiusInKms) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Future<List<Restaurant>> findRestaurantsByItemAttributesMt(Double latitude,
+      Double longitude,
       String searchString, LocalTime currentTime, Double servingRadiusInKms) {
+    // TODO Auto-generated method stub
     return null;
   }
 
